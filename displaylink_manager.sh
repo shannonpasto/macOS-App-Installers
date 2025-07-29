@@ -7,7 +7,7 @@ installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/C
 URL="https://www.synaptics.com"
 currentVers=$(/usr/bin/curl -sL "${URL}/products/displaylink-graphics/downloads/macos" | /usr/bin/grep "Release" | /usr/bin/head -n 1 | /usr/bin/sed -n 's/.*Release: \([^ ]*\).*/\1/p')
 releaseDate=$(/usr/bin/curl -sL "${URL}/products/displaylink-graphics/downloads/macos" | /usr/bin/grep "Release Notes" | /usr/bin/grep "${currentVers}" | /usr/bin/cut -d \" -f 2 - | rev | /usr/bin/cut -d "/" -f 2 - | rev)
-downloadURL="${URL}/sites/default/files/exe_files/${releaseDate}/DisplayLink%20Manager%20Graphics%20Connectivity${currentVers}-EXE.pkg"
+downloadURL="${URL}/sites/default/files/exe_files/${releaseDate}/DisplayLink%20Manager%20Graphics%20Connectivity${currentVers}-EXE.zip"
 FILE=${downloadURL##*/}
 LSEURL="https://www.displaylink.com/downloads/macos_extension"
 TMPLSEURL=$(/usr/bin/curl -sI "${LSEURL}" | /usr/bin/grep -i "^Location" | /usr/bin/awk '{print $2}' | /usr/bin/sed 's/\r//g')
@@ -38,10 +38,16 @@ else
 fi
 
 if /usr/bin/curl --retry 3 --retry-delay 0 --retry-all-errors -sL "${downloadURL}" -o /tmp/"${FILE}"; then
-  /usr/sbin/installer -pkg /tmp/"${FILE}" -target /
+  /usr/bin/ditto -xk /tmp/"${FILE}" /tmp/.
+  newFILE=$(/usr/bin/unzip -Z1 /tmp/"${FILE}")
+  /usr/sbin/installer -pkg /tmp/"${newFILE}" -target /
   /bin/rm /tmp/"${FILE}"
 fi
 if /usr/bin/curl --retry 3 --retry-delay 0 --retry-all-errors -sL "${TMPLSEURL}" -o /tmp/"${LSEFILE}"; then
-  /usr/sbin/installer -pkg /tmp/"${LSEFILE}" -target /
+  TMPDIR=$(mktemp -d)
+  /usr/bin/hdiutil attach /tmp/"${LSEFILE}" -noverify -quiet -nobrowse -mountpoint "${TMPDIR}"
+  /usr/bin/find "${TMPDIR}" -name "*.pkg" -exec /usr/sbin/installer -pkg {} -target / \;
+  /usr/bin/hdiutil eject "${TMPDIR}" -quiet
+  /bin/rmdir "${TMPDIR}"
   /bin/rm /tmp/"${LSEFILE}"
 fi

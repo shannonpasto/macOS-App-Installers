@@ -5,7 +5,8 @@ bundleName="Adobe Acrobat Reader"
 installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/Contents/Info.plist CFBundleVersion 2>/dev/null)
 
 currentVers=$(/usr/bin/curl -s https://armmf.adobe.com/arm-manifests/mac/AcrobatDC/reader/current_version.txt)
-downloadURL="https://ardownload2.adobe.com/pub/adobe/reader/mac/AcrobatDC/${currentVers}/AcroRdrDC_${currentVers}_MUI.dmg"
+currentVersNoDots=$(/bin/echo "${currentVers}" | /usr/bin/sed 's/\.//g')
+downloadURL="https://ardownload2.adobe.com/pub/adobe/acrobat/mac/AcrobatDC/${currentVersNoDots}/AcroRdrSCADC${currentVersNoDots}_MUI.dmg"
 FILE=${downloadURL##*/}
 
 # compare version numbers
