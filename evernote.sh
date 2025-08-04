@@ -36,6 +36,7 @@ fi
 if /usr/bin/curl --retry 3 --retry-delay 0 --retry-all-errors -sL "${downloadURL}" -o /tmp/"${FILE}"; then
   /bin/rm -rf "${appInstallPath}"/"${bundleName}.app" >/dev/null 2>&1
   /usr/bin/ditto -xk /tmp/"${FILE}" "${appInstallPath}"/.
+  /usr/bin/xattr -r -d com.apple.quarantine "${appInstallPath}"/"${bundleName}.app"
   /usr/sbin/chown -R root:admin "${appInstallPath}"/"${bundleName}.app"
   /bin/chmod -R 755 "${appInstallPath}"/"${bundleName}.app"
   /bin/rm /tmp/"${FILE}"

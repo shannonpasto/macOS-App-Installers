@@ -1,14 +1,14 @@
 #!/bin/sh
 
 appInstallPath="/Applications"
-bundleName="Subler"
+bundleName="MUT"
 installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/Contents/Info.plist CFBundleShortVersionString 2>/dev/null)
 
-gitHubURL="https://github.com/SublerApp/Subler"
+gitHubURL="https://github.com/jamf/mut"
 latestReleaseURL=$(/usr/bin/curl -sI "${gitHubURL}/releases/latest" | /usr/bin/grep -i ^location | /usr/bin/awk '{print $2}' | /usr/bin/sed 's/\r//g')
 latestReleaseTag=$(basename "${latestReleaseURL}")
-currentVers="${latestReleaseTag}"
-downloadURL="${gitHubURL}/releases/download/${latestReleaseTag}/Subler-${currentVers}.zip"
+currentVers=$(/bin/echo "${latestReleaseTag}" | /usr/bin/sed 's/v//')
+downloadURL="${gitHubURL}/releases/download/${latestReleaseTag}/MUT.app.zip"
 FILE=${downloadURL##*/}
 
 # compare version numbers
@@ -37,7 +37,8 @@ fi
 
 if /usr/bin/curl --retry 3 --retry-delay 0 --retry-all-errors -sL "${downloadURL}" -o /tmp/"${FILE}"; then
   /bin/rm -rf "${appInstallPath}"/"${bundleName}.app" >/dev/null 2>&1
-  /usr/bin/ditto -xk /tmp/"${FILE}" "${appInstallPath}"/.
+  cd "${appInstallPath}"/
+  /usr/bin/ditto -xk /tmp/"${FILE}" .
   /usr/bin/xattr -r -d com.apple.quarantine "${appInstallPath}"/"${bundleName}.app"
   /usr/sbin/chown -R root:admin "${appInstallPath}"/"${bundleName}.app"
   /bin/chmod -R 755 "${appInstallPath}"/"${bundleName}.app"

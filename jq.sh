@@ -54,6 +54,7 @@ fi
 if /usr/bin/curl --retry 3 --retry-delay 0 --retry-all-errors -sL "${downloadURL}" -o /tmp/"${FILE}"; then
   /bin/rm -rf "${appInstallPath:?}"/"${bundleName}" >/dev/null 2>&1
   /bin/mv /tmp/"${FILE}" "${appInstallPath}"/
+  /usr/bin/xattr -r -d com.apple.quarantine "${appInstallPath}"/"${bundleName}"
   /usr/sbin/chown root:wheel "${appInstallPath}"/"${FILE}"
   /bin/chmod 755 "${appInstallPath}"/"${FILE}"
 fi

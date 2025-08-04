@@ -38,6 +38,7 @@ if /usr/bin/curl --retry 3 --retry-delay 0 --retry-all-errors -sL "${downloadURL
    /usr/bin/hdiutil convert /tmp/"${FILE}" -quiet -format UDTO -o /tmp/"${FILE%.*}.cdr"
   /usr/bin/hdiutil attach /tmp/"${FILE%.*}.cdr" -noverify -quiet -nobrowse -mountpoint "${TMPDIR}"
   /usr/bin/ditto "${TMPDIR}"/"${bundleName}.app" "${appInstallPath}"/"${bundleName}.app"
+  /usr/bin/xattr -r -d com.apple.quarantine "${appInstallPath}"/"${bundleName}.app"
   /usr/sbin/chown -R root:admin "${appInstallPath}"/"${bundleName}.app"
   /bin/chmod -R 755 "${appInstallPath}"/"${bundleName}.app"
   /usr/bin/hdiutil eject "${TMPDIR}" -quiet
