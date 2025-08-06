@@ -4,9 +4,22 @@ appInstallPath="/Applications"
 bundleName="CycliqPlus"
 installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/Contents/Info.plist CFBundleShortVersionString 2>/dev/null)
 
-xmlData=$(/usr/bin/curl -s "https://cycliq.com/files/software/appcast.xml")
-currentVers=$(/bin/echo "${xmlData}" | /usr/bin/xmllint --xpath '//channel/item/title/text()' - | /usr/bin/tail -n 1)
-downloadURL=$(/bin/echo "${xmlData}" | /usr/bin/xmllint --xpath "//item[title=\"${currentVers}\"]/enclosure/@url" - | /usr/bin/cut -d \" -f 2 -)
+URL="https://legacy.cycliq.com"
+case $(uname -m) in
+  arm64)
+    archType="silicon"
+    ;;
+
+  x86_64)
+    archType="intel"
+    ;;
+
+  *)
+    /bin/echo "Unknown processor type. Exiting"
+    exit 1
+esac
+downloadURL="${URL}$(/usr/bin/curl -sI "${URL}"/software/cycliqplus/macos-"${archType}"/ | /usr/bin/grep -i ^location | /usr/bin/awk '{print $2}' | /usr/bin/sed 's/\r//')"
+currentVers=$(/bin/echo "${downloadURL}" | /usr/bin/grep -oE "CycliqPlus-[0-9]+(\.[0-9]+)*" | /usr/bin/sed 's/[a-zA-Z-]//g')
 FILE=${downloadURL##*/}
 
 # compare version numbers
