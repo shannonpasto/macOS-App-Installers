@@ -1,25 +1,15 @@
 #!/bin/sh
 
 appInstallPath="/Applications"
-bundleName="Dropbox"
+bundleName="Mist"
 installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/Contents/Info.plist CFBundleShortVersionString 2>/dev/null)
 
-case $(uname -m) in
-  arm64)
-    downloadURL="https://www.dropbox.com/download?plat=mac&full=1&arch=arm64"
-    ;;
-
-  x86_64)
-    downloadURL="https://www.dropbox.com/download?plat=mac&full=1"
-    ;;
-
-  *)
-    /bin/echo "Unknown processor type. Exiting"
-    exit 1
-esac
-
+gitHubURL="https://github.com/ninxsoft/Mist"
+latestReleaseURL=$(/usr/bin/curl -sI "${gitHubURL}/releases/latest" | /usr/bin/grep -i ^location | /usr/bin/awk '{print $2}' | /usr/bin/sed 's/\r//g')
+latestReleaseTag=$(basename "${latestReleaseURL}")
+currentVers=$(/bin/echo "${latestReleaseTag}" | /usr/bin/sed 's/v//')
+downloadURL="${gitHubURL}/releases/download/${latestReleaseTag}/Mist.${currentVers}.pkg"
 FILE=${downloadURL##*/}
-currentVers=$(curl -sI "${downloadURL}" | /usr/bin/grep -i ^Location | /usr/bin/awk '{print $2}' | /usr/bin/sed -E 's/.*%20([0-9.]*)/\1/g' | rev | /usr/bin/cut -d . -f 3- - | rev)
 
 # compare version numbers
 if [ "${installedVers}" ]; then
@@ -46,14 +36,6 @@ else
 fi
 
 if /usr/bin/curl --retry 3 --retry-delay 0 --retry-all-errors -sL "${downloadURL}" -o /tmp/"${FILE}"; then
-  /bin/rm -rf "${appInstallPath}"/"${bundleName}.app" >/dev/null 2>&1
-  TMPDIR=$(mktemp -d)
-  /usr/bin/hdiutil attach /tmp/"${FILE}" -noverify -quiet -nobrowse -mountpoint "${TMPDIR}"
-  /usr/bin/ditto "${TMPDIR}"/"${bundleName}.app" "${appInstallPath}"/"${bundleName}.app"
-  /usr/bin/xattr -r -d com.apple.quarantine "${appInstallPath}"/"${bundleName}.app"
-  /usr/sbin/chown -R root:admin "${appInstallPath}"/"${bundleName}.app"
-  /bin/chmod -R 755 "${appInstallPath}"/"${bundleName}.app"
-  /usr/bin/hdiutil eject "${TMPDIR}" -quiet
-  /bin/rmdir "${TMPDIR}"
+  /usr/sbin/installer -pkg /tmp/"${FILE}" -target /
   /bin/rm /tmp/"${FILE}"
 fi

@@ -1,25 +1,13 @@
 #!/bin/sh
 
 appInstallPath="/Applications"
-bundleName="Dropbox"
+bundleName="OpenVPN Connect"
 installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/Contents/Info.plist CFBundleShortVersionString 2>/dev/null)
 
-case $(uname -m) in
-  arm64)
-    downloadURL="https://www.dropbox.com/download?plat=mac&full=1&arch=arm64"
-    ;;
-
-  x86_64)
-    downloadURL="https://www.dropbox.com/download?plat=mac&full=1"
-    ;;
-
-  *)
-    /bin/echo "Unknown processor type. Exiting"
-    exit 1
-esac
-
+downloadURL=$(/usr/bin/curl -sI "https://openvpn.net/downloads/openvpn-connect-v3-macos.dmg" | /usr/bin/grep -i ^location | /usr/bin/awk '{print $2}' | /usr/bin/sed 's/\r//')
+currentVers=$(/bin/echo "${downloadURL}" | /usr/bin/grep -oE "openvpn-connect-[0-9]+(\.[0-9]+)*" | /usr/bin/cut -d - -f 3- - | rev | /usr/bin/cut -d . -f 2- - | rev)
 FILE=${downloadURL##*/}
-currentVers=$(curl -sI "${downloadURL}" | /usr/bin/grep -i ^Location | /usr/bin/awk '{print $2}' | /usr/bin/sed -E 's/.*%20([0-9.]*)/\1/g' | rev | /usr/bin/cut -d . -f 3- - | rev)
+SHAHash=$(/usr/bin/curl -s "https://openvpn.net/connect-docs/macos-release-notes.html" | /usr/bin/xmllint --html --xpath '//*[starts-with(@id,"sha-256-checksum-")]/div[2]/table/tbody/tr/td[2]/div/p/span/text()' - 2>/dev/null)
 
 # compare version numbers
 if [ "${installedVers}" ]; then
@@ -46,13 +34,25 @@ else
 fi
 
 if /usr/bin/curl --retry 3 --retry-delay 0 --retry-all-errors -sL "${downloadURL}" -o /tmp/"${FILE}"; then
-  /bin/rm -rf "${appInstallPath}"/"${bundleName}.app" >/dev/null 2>&1
+  SHAResult=$(/bin/echo "${SHAHash} */tmp/${FILE}" | /usr/bin/shasum -a 256 -c 2>/dev/null)
+  case "${SHAResult}" in
+    *OK)
+      /bin/echo "SHA hash has successfully verifed."
+      ;;
+
+    *FAILED)
+      /bin/echo "SHA hash has failed verification"
+      exit 1
+      ;;
+
+    *)
+      /bin/echo "An unknown error has occured."
+      exit 1
+      ;;
+  esac
   TMPDIR=$(mktemp -d)
   /usr/bin/hdiutil attach /tmp/"${FILE}" -noverify -quiet -nobrowse -mountpoint "${TMPDIR}"
-  /usr/bin/ditto "${TMPDIR}"/"${bundleName}.app" "${appInstallPath}"/"${bundleName}.app"
-  /usr/bin/xattr -r -d com.apple.quarantine "${appInstallPath}"/"${bundleName}.app"
-  /usr/sbin/chown -R root:admin "${appInstallPath}"/"${bundleName}.app"
-  /bin/chmod -R 755 "${appInstallPath}"/"${bundleName}.app"
+  /usr/bin/find "${TMPDIR}" -name "*$(uname -m)*.pkg" -exec installer -pkg {} -target / \;
   /usr/bin/hdiutil eject "${TMPDIR}" -quiet
   /bin/rmdir "${TMPDIR}"
   /bin/rm /tmp/"${FILE}"
