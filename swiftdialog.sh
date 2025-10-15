@@ -11,6 +11,7 @@ currentVers=$(/bin/echo "${latestReleaseTag}" | /usr/bin/sed 's/v//')
 assetsURL=$(/usr/bin/curl -s "${latestReleaseURL}" | /usr/bin/grep expanded_assets | /usr/bin/xmllint --html --xpath '//*/include-fragment/@src' - 2>/dev/null | /usr/bin/awk -F \" '{print $2}')
 downloadURL="${gitHubURL}/$(/usr/bin/curl -s "${assetsURL}" | /usr/bin/tr '"' "\n" | /usr/bin/grep pkg | /usr/bin/cut -d "/" -f 4- -)"
 FILE=${downloadURL##*/}
+SHAHash=$(/usr/bin/curl -sL "$(/bin/echo "${latestReleaseURL}" | /usr/bin/sed 's/tag/expanded_assets/')" | /usr/bin/awk "f&&/sha256:/{print; exit} /${FILE}/{f=1}"| /usr/bin/sed -E 's/.*sha256:([0-9a-fA-F]{64}).*/\1/')
 
 # compare version numbers
 if [ "${installedVers}" ]; then
@@ -37,6 +38,26 @@ else
 fi
 
 if /usr/bin/curl --retry 3 --retry-delay 0 --retry-all-errors -sL "${downloadURL}" -o /tmp/"${FILE}"; then
+  if [ "${SHAResult}" ]; then
+    SHAResult=$(/bin/echo "${SHAHash} */tmp/${FILE}" | /usr/bin/shasum -a 256 -c 2>/dev/null)
+    case "${SHAResult}" in
+      *OK)
+        /bin/echo "SHA hash has successfully verifed."
+        ;;
+
+      *FAILED)
+        /bin/echo "SHA hash has failed verification"
+        exit 1
+        ;;
+
+      *)
+        /bin/echo "An unknown error has occured."
+        exit 1
+        ;;
+    esac
+  else
+    /bin/echo "No SHAHash. Continuing with install"
+  fi
   /usr/sbin/installer -pkg /tmp/"${FILE}" -target /
   /bin/rm /tmp/"${FILE}"
 fi
