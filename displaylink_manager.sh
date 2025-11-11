@@ -15,6 +15,7 @@ LSEFILE=${TMPLSEURL##*/}
 
 # compare version numbers
 if [ "${installedVers}" ]; then
+  /bin/echo "v${installedVers} of ${bundleName} is installed."
   installedVersNoDots=$(/bin/echo "${installedVers}" | /usr/bin/sed 's/\.//g')
   currentVersNoDots=$(/bin/echo "${currentVers}" | /usr/bin/sed 's/\.//g')
 
@@ -31,10 +32,10 @@ if [ "${installedVers}" ]; then
     /bin/echo "${bundleName} does not need to be updated"
     exit 0
   else
-    /bin/echo "${bundleName} needs to be updated"
+    /bin/echo "Updating ${bundleName} to v${currentVers}"
   fi
 else
-  /bin/echo "Installing ${bundleName}"
+  /bin/echo "Installing v${currentVers} of ${bundleName}"
 fi
 
 if /usr/bin/curl --retry 3 --retry-delay 0 --retry-all-errors -sL "${downloadURL}" -o /tmp/"${FILE}"; then
