@@ -1,12 +1,12 @@
 #!/bin/sh
 
 appInstallPath="/Applications"
-bundleName="coconutBattery"
+bundleName="Claude"
 installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/Contents/Info.plist CFBundleShortVersionString 2>/dev/null)
 
-URL="https://www.coconut-flavour.com/coconutbattery/"
-currentVers=$(/usr/bin/curl -s "${URL}" | /usr/bin/xmllint --html --xpath '//*[@id="home"]/div/div/div/div[1]/div/a[1]/text()' - 2>/dev/null | /usr/bin/awk '{print $2}' | /usr/bin/cut -c 2- - | xargs)
-downloadURL=$(/usr/bin/curl -s "${URL}" | /usr/bin/xmllint --html --xpath '//*[@id="home"]/div/div/div/div[1]/div/a[1]/@href' - 2>/dev/null | /usr/bin/cut -d \" -f 2 -)
+jSON=$(curl -s "https://downloads.claude.ai/releases/darwin/universal/RELEASES.json")
+currentVers=$(printf '%s' "${jSON}" | jq -r '.currentRelease')
+downloadURL=$(printf '%s' "${jSON}" | jq -r '.releases[].updateTo.url')
 FILE=${downloadURL##*/}
 
 # compare version numbers
