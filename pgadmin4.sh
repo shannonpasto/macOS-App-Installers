@@ -6,11 +6,11 @@ installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/C
 
 case $(uname -m) in
   arm64)
-    myArch="arm64"
+    archType="arm64"
     ;;
 
   x86_64)
-    myArch="x64"
+    archType="x64"
     ;;
 
 *)
@@ -19,7 +19,7 @@ case $(uname -m) in
     ;;
 esac
 currentVers=$(/usr/bin/curl -s "https://pgadmin-archive.postgresql.org/pgadmin4/index.html" | /usr/bin/grep 'href="v'  | /usr/bin/tail -n 1 | /usr/bin/xmllint --xpath '//li/a/text()' - | /usr/bin/cut -c 2- -)
-downloadURL="https://pgadmin-archive.postgresql.org/pgadmin4/v${currentVers}/macos/pgadmin4-${currentVers}-${myArch}.dmg"
+downloadURL="https://pgadmin-archive.postgresql.org/pgadmin4/v${currentVers}/macos/pgadmin4-${currentVers}-${archType}.dmg"
 FILE=${downloadURL##*/}
 
 # compare version numbers

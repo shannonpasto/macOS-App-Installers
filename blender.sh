@@ -6,11 +6,11 @@ installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/C
 
 case $(uname -m) in
   arm64)
-    myArch="arm64"
+    archType="arm64"
     ;;
 
   x86_64)
-    myArch="x64"
+    archType="x64"
     ;;
 
 *)
@@ -19,11 +19,11 @@ case $(uname -m) in
     ;;
 esac
 URL="https://download.blender.org/release"
-currentVersTemp=$(curl -s "${URL}/" | grep -Eo 'Blender[0-9]+\.[0-9]+' | sort -V | tail -n 1 | sed 's/[a-zA-Z]//g')
-currentVers=$(curl -Ls "${URL}/Blender${currentVersTemp}" | grep "macos-${myArch}" | grep -Eo 'blender-[0-9]+\.[0-9]+(\.[0-9]+)?' | uniq | sort -V | tail -n 1 | cut -d "-" -f 2- -)
-downloadURL="${URL}/Blender${currentVersTemp}/blender-${currentVers}-macos-${myArch}.dmg"
+currentVersTemp=$(/usr/bin/curl -s "${URL}/" | /usr/bin/grep -Eo 'Blender[0-9]+\.[0-9]+' | /usr/bin/sort -V | /usr/bin/tail -n 1 | /usr/bin/sed 's/[a-zA-Z]//g')
+currentVers=$(/usr/bin/curl -Ls "${URL}/Blender${currentVersTemp}" | /usr/bin/grep "macos-${archType}" | /usr/bin/grep -Eo 'blender-[0-9]+\.[0-9]+(\.[0-9]+)?' | /usr/bin/uniq | /usr/bin/sort -V | /usr/bin/tail -n 1 | /usr/bin/cut -d "-" -f 2- -)
+downloadURL="${URL}/Blender${currentVersTemp}/blender-${currentVers}-macos-${archType}.dmg"
 FILE=${downloadURL##*/}
-SHAHash=$(curl -s "${URL}/Blender${currentVersTemp}/blender-${currentVers}.sha256" | grep "macos-${myArch}" | awk '{print $1}')
+SHAHash=$(/usr/bin/curl -s "${URL}/Blender${currentVersTemp}/blender-${currentVers}.sha256" | /usr/bin/grep "macos-${archType}" | /usr/bin/awk '{print $1}')
 
 # compare version numbers
 if [ "${installedVers}" ]; then

@@ -7,14 +7,13 @@ installedVers=$("${appInstallPath}/${bundleName}" --version | /usr/bin/cut -d \-
 
 gitHubURL="https://github.com/jqlang/jq"
 latestReleaseURL=$(/usr/bin/curl -sI "${gitHubURL}/releases/latest" | /usr/bin/grep -i ^location | /usr/bin/awk '{print $2}' | /usr/bin/sed 's/\r//g')
-latestReleaseTag=$(basename "${latestReleaseURL}")
 case "$(uname -m)" in
   arm64)
-    myArch="arm64"
+    archType="arm64"
     ;;
 
   x86_64)
-    myArch="amd64"
+    archType="amd64"
     ;;
 
   *)
@@ -23,10 +22,10 @@ case "$(uname -m)" in
     ;;
 esac
 # shellcheck disable=SC1001
-currentVers=$(/bin/echo "${latestReleaseTag}" | /usr/bin/cut -d \- -f 2- -)
-downloadURL="${gitHubURL}/releases/download/${latestReleaseTag}/jq-macos-${myArch}"
+currentVers=$(basename "${latestReleaseURL}" | /usr/bin/cut -d \- -f 2- -)
+downloadURL="https://github.com$(/usr/bin/curl -sL "$(printf '%s' "${latestReleaseURL}" | /usr/bin/sed 's/tag/expanded_assets/')" | /usr/bin/grep "macos-${archType}" | /usr/bin/head -n 1 | /usr/bin/xmllint --html --xpath 'string(//a/@href)' -)"
 FILE="${bundleName}"
-SHAHash=$(/usr/bin/curl -sL "$(/bin/echo "${latestReleaseURL}" | /usr/bin/sed 's/tag/expanded_assets/')" | /usr/bin/awk "f&&/sha256:/{print; exit} /${FILE}/{f=1}"| /usr/bin/sed -E 's/.*sha256:([0-9a-fA-F]{64}).*/\1/')
+SHAHash=$(/usr/bin/curl -sL "$(printf '%s' "${latestReleaseURL}" | /usr/bin/sed 's/tag/expanded_assets/')" | /usr/bin/awk "f&&/sha256:/{print; exit} /${FILE}/{f=1}"| /usr/bin/sed -E 's/.*sha256:([0-9a-fA-F]{64}).*/\1/')
 
 # compare version numbers
 if [ "${installedVers}" ]; then

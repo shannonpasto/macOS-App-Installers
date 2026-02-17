@@ -6,8 +6,7 @@ installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/C
 
 gitHubURL="https://github.com/laurent22/joplin"
 latestReleaseURL=$(/usr/bin/curl -sI "${gitHubURL}/releases/latest" | /usr/bin/grep -i ^location | /usr/bin/awk '{print $2}' | /usr/bin/sed 's/\r//g')
-latestReleaseTag=$(basename "${latestReleaseURL}")
-currentVers=$(/bin/echo "${latestReleaseTag}" | /usr/bin/cut -c 2- -)
+currentVers=$(basename "${latestReleaseURL}" | /usr/bin/cut -c 2- -)
 case "$(uname -m)" in
   arm64)
     archType="arm64"
@@ -22,9 +21,9 @@ case "$(uname -m)" in
     exit 1
     ;;
 esac
-downloadURL="${gitHubURL}/releases/download/${latestReleaseTag}/Joplin-${currentVers}-${archType}.zip"
+downloadURL="https://github.com$(/usr/bin/curl -sL "$(printf '%s' "${latestReleaseURL}" | /usr/bin/sed 's/tag/expanded_assets/')" | /usr/bin/grep "${archType}".zip | /usr/bin/head -n 1 | /usr/bin/xmllint --html --xpath 'string(//a/@href)' -)"
 FILE=${downloadURL##*/}
-SHAHash=$(/usr/bin/curl -sL "$(/bin/echo "${latestReleaseURL}" | /usr/bin/sed 's/tag/expanded_assets/')" | /usr/bin/awk "f&&/sha256:/{print; exit} /${FILE}/{f=1}"| /usr/bin/sed -E 's/.*sha256:([0-9a-fA-F]{64}).*/\1/')
+SHAHash=$(/usr/bin/curl -sL "$(printf '%s' "${latestReleaseURL}" | /usr/bin/sed 's/tag/expanded_assets/')" | /usr/bin/awk "f&&/sha256:/{print; exit} /${FILE}/{f=1}"| /usr/bin/sed -E 's/.*sha256:([0-9a-fA-F]{64}).*/\1/')
 
 # compare version numbers
 if [ "${installedVers}" ]; then

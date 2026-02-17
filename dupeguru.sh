@@ -6,9 +6,8 @@ installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/C
 
 gitHubURL="https://github.com/arsenetar/dupeguru"
 latestReleaseURL=$(/usr/bin/curl -sI "${gitHubURL}/releases/latest" | /usr/bin/grep -i ^location | /usr/bin/awk '{print $2}' | /usr/bin/sed 's/\r//g')
-latestReleaseTag=$(basename "${latestReleaseURL}")
-currentVers="${latestReleaseTag}"
-downloadURL="https://github.com/arsenetar/dupeguru/releases/download/${latestReleaseTag}/dupeguru_macOS_Qt_${currentVers}.zip"
+currentVers=$(basename "${latestReleaseURL}")
+downloadURL="https://github.com$(/usr/bin/curl -sL "$(printf '%s' "${latestReleaseURL}" | /usr/bin/sed 's/tag/expanded_assets/')" | /usr/bin/grep macOS | /usr/bin/head -n 1 | /usr/bin/xmllint --html --xpath 'string(//a/@href)' -)"
 FILE=$(/bin/echo "${downloadURL##*/}")
 
 # compare version numbers

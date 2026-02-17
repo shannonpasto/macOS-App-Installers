@@ -11,19 +11,20 @@ installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/C
 jSON=$(/usr/bin/curl -s 'https://data.services.jetbrains.com/products?code=PCP&release.type=release&_=1767045118843')
 case $(uname -m) in
   arm64)
-    procType="macM1"
+    archType="macM1"
     ;;
 
   x86_64)
-    procType="mac"
+    archType="mac"
     ;;
 
   *)
     /bin/echo "Unknown processor type. Exiting"
     exit 1
 esac
-downloadURL=$(printf '%s' "${jSON}" | "${jqBin}" -r "first(.[].releases[].downloads.${procType}).link")
-SHAHash=$(/usr/bin/curl -s "$(printf '%s' "${jSON}" | "${jqBin}" -r "first(.[].releases[].downloads.${procType}).checksumLink")" | /usr/bin/awk '{print $1}')
+currentVers=$(printf '%s' "${jSON}" | "${jqBin}" -r "first(.[].releases[].version)")
+downloadURL=$(printf '%s' "${jSON}" | "${jqBin}" -r "first(.[].releases[].downloads.${archType}).link")
+SHAHash=$(/usr/bin/curl -s "$(printf '%s' "${jSON}" | "${jqBin}" -r "first(.[].releases[].downloads.${archType}).checksumLink")" | /usr/bin/awk '{print $1}')
 
 # compare version numbers
 if [ "${installedVers}" ]; then

@@ -6,9 +6,8 @@ installedVers=$("${appInstallPath}/${bundleName}" --version  2>/dev/null)
 
 gitHubURL="https://github.com/kcrawford/dockutil"
 latestReleaseURL=$(/usr/bin/curl -sI "${gitHubURL}/releases/latest" | /usr/bin/grep -i ^location | /usr/bin/awk '{print $2}' | /usr/bin/sed 's/\r//g')
-latestReleaseTag=$(basename "${latestReleaseURL}")
-currentVers=$(/bin/echo "${latestReleaseTag}" | /usr/bin/tr -d '[:alpha:]' | /usr/bin/sed 's/-//')
-downloadURL="${gitHubURL}/releases/download/${latestReleaseTag}/dockutil-${currentVers}.pkg"
+currentVers=$(basename "${latestReleaseURL}" | /usr/bin/tr -d '[:alpha:]' | /usr/bin/sed 's/-//')
+downloadURL="https://github.com$(/usr/bin/curl -sL "$(printf '%s' "${latestReleaseURL}" | /usr/bin/sed 's/tag/expanded_assets/')" | /usr/bin/grep pkg | /usr/bin/head -n 1 | /usr/bin/xmllint --html --xpath 'string(//a/@href)' -)"
 FILE=${downloadURL##*/}
 
 # compare version numbers

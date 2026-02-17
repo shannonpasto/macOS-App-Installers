@@ -6,9 +6,8 @@ installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/C
 
 gitHubURL="https://github.com/sanger-pathogens/Artemis"
 latestReleaseURL=$(/usr/bin/curl -sI "${gitHubURL}/releases/latest" | /usr/bin/grep -i ^location | /usr/bin/awk '{print $2}' | /usr/bin/sed 's/\r//g')
-latestReleaseTag=$(basename "${latestReleaseURL}")
-currentVers=$(/bin/echo "${latestReleaseTag}" | /usr/bin/tr -d '[:alpha:]' | /usr/bin/sed 's/-//')
-downloadURL="${gitHubURL}/releases/download/${latestReleaseTag}/artemis-macosx-release-${currentVers}.dmg.gz"
+currentVers=$(basename "${latestReleaseURL}" | /usr/bin/tr -d '[:alpha:]' | /usr/bin/sed 's/-//')
+downloadURL="https://github.com$(/usr/bin/curl -sL "$(printf '%s' "${latestReleaseURL}" | /usr/bin/sed 's/tag/expanded_assets/')" | /usr/bin/grep dmg.gz | /usr/bin/head -n 1 | /usr/bin/xmllint --html --xpath 'string(//a/@href)' -)"
 FILE=${downloadURL##*/}
 
 # compare version numbers
