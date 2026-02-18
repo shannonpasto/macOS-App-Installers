@@ -4,9 +4,11 @@ appInstallPath="/Applications"
 bundleName="Pacifist"
 installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/Contents/Info.plist CFBundleShortVersionString 2>/dev/null)
 
-currentVers=$(/usr/bin/curl -s "https://www.charlessoft.com/cgi-bin/pacifist_relnotes.cgi" | /usr/bin/xmllint --html --xpath '//*/h1/text()' - | /usr/bin/head -n 1 | /usr/bin/awk '{print $2}')
-downloadURL="https://www.charlessoft.com/pacifist_download/Pacifist_${currentVers}.zip"
-FILE=${downloadURL##*/}
+xmlData=$(/usr/bin/curl -s "https://www.charlessoft.com/cgi-bin/pacifist_sparkle.cgi")
+versionCount=$(printf '%s' "${xmlData}" | /usr/bin/xmllint --xpath '//rss/channel/item/title' - | /usr/bin/wc -l | /usr/bin/xargs)
+currentVers=$(printf '%s' "${xmlData}" | /usr/bin/xmllint --xpath "//rss/channel/item[${versionCount}]/title/text()" - | /usr/bin/awk '{print $2}')
+downloadURL=$(/usr/bin/curl -sI "$(printf '%s' "${xmlData}" | /usr/bin/xmllint --xpath "string(//rss/channel/item[${versionCount}]/enclosure/@url)" -)" | /usr/bin/grep ^location | /usr/bin/awk '{print $2}')
+FILE=$(printf '%s' "${downloadURL}" | /usr/bin/grep -oE "Pacifist.*$")
 
 # compare version numbers
 if [ "${installedVers}" ]; then
