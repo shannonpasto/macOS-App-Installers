@@ -4,7 +4,11 @@ appInstallPath="/Applications"
 bundleName="Sublime Merge"
 installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/Contents/Info.plist CFBundleShortVersionString 2>/dev/null | /usr/bin/awk '{print $2}')
 
-currentVers=$(/usr/bin/curl -s "https://www.sublimemerge.com/download" | /usr/bin/grep Build | /usr/bin/head -n 1 | /usr/bin/xmllint --html --xpath '//p[@class="latest"]/text()' - | /usr/bin/awk '{print $2}')
+if [ "$(/usr/bin/sw_vers -buildVersion | /usr/bin/cut -c 1-2 -)" -ge 24 ]; then
+  currentVers=$(/usr/bin/curl -s "https://www.sublimemerge.com/updates/stable_update_check" | /usr/bin/jq -r .latest_version)
+else
+  currentVers=$(/usr/bin/curl -s "https://www.sublimemerge.com/updates/stable_update_check" | /usr/bin/plutil -extract latest_version raw -o - -)
+fi
 downloadURL="https://download.sublimetext.com/sublime_merge_build_${currentVers}_mac.zip"
 FILE=${downloadURL##*/}
 

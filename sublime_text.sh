@@ -4,7 +4,11 @@ appInstallPath="/Applications"
 bundleName="Sublime Text"
 installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/Contents/Info.plist CFBundleShortVersionString 2>/dev/null | /usr/bin/awk '{print $2}')
 
-currentVers=$(/usr/bin/curl -s "https://www.sublimetext.com/" | /usr/bin/grep Build | /usr/bin/xmllint --xpath '//*/i/text()' - | /usr/bin/sed 's/[^0-9]//g')
+if [ "$(/usr/bin/sw_vers -buildVersion | /usr/bin/cut -c 1-2 -)" -ge 24 ]; then
+  currentVers=$(/usr/bin/curl -s "https://www.sublimetext.com/updates/4/stable_update_check" | /usr/bin/jq -r .latest_version)
+else
+  currentVers=$(/usr/bin/curl -s "https://www.sublimetext.com/updates/4/stable_update_check" | /usr/bin/plutil -extract latest_version raw -o - -)
+fi
 downloadURL="https://download.sublimetext.com/sublime_text_build_${currentVers}_mac.zip"
 FILE=${downloadURL##*/}
 
