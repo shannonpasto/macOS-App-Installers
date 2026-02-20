@@ -1,13 +1,11 @@
 #!/bin/sh
 
-appInstallPath="/Applications"
-bundleName="Isadora"
+appInstallPath="/Library/Application Support/JamfConnect"
+bundleName="JCDaemon"
 installedVers=$(/usr/bin/defaults read "${appInstallPath}"/"${bundleName}.app"/Contents/Info.plist CFBundleShortVersionString 2>/dev/null)
 
-currentVers=$(/usr/bin/curl -s "https://support.troikatronix.com/support/solutions/folders/5000277523" | /usr/bin/grep "Read the Isadora 4 Manual" | tr '[:space:]' '\n' | /usr/bin/grep '^[0-9]' | /usr/bin/sort | /usr/bin/tail -n 1)
-URL="https://troikatronix.com"
-downloadURLTMP=$(/usr/bin/curl -s "${URL}/get-it/" | /usr/bin/grep isadoramac | /usr/bin/xmllint --html --xpath 'string(//a[contains(@href, "std.dmg")]/@href)' - | /usr/bin/cut -c 2- -)
-downloadURL="${URL}${downloadURLTMP}"
+downloadURL="https://files.jamfconnect.com/JamfConnect.dmg"
+currentVers=$(/usr/bin/curl -sI "${downloadURL}" | /usr/bin/grep "x-amz-meta-version" | /usr/bin/awk '{print $2}')
 FILE=${downloadURL##*/}
 
 # compare version numbers
@@ -37,9 +35,11 @@ fi
 
 if /usr/bin/curl --retry 3 --retry-delay 0 --retry-all-errors -sL "${downloadURL}" -o /tmp/"${FILE}"; then
   TMPDIR=$(mktemp -d)
-  /usr/bin/hdiutil attach /tmp/"${FILE}" -noverify -quiet -nobrowse -mountpoint "${TMPDIR}"
-  /usr/bin/find "${TMPDIR}" -name "*.pkg" -exec /usr/sbin/installer -pkg {} -target / \;
+  /usr/bin/hdiutil convert /tmp/"${FILE}" -quiet -format UDTO -o /tmp/"${FILE%.*}.cdr"
+  /usr/bin/hdiutil attach /tmp/"${FILE%.*}.cdr" -noverify -quiet -nobrowse -mountpoint "${TMPDIR}"
+  /usr/bin/find "${TMPDIR}" -maxdepth 1 -name "*.pkg" -exec /usr/sbin/installer -pkg {} -target / \;
   /usr/bin/hdiutil eject "${TMPDIR}" -quiet
   /bin/rmdir "${TMPDIR}"
   /bin/rm /tmp/"${FILE}"
+  /bin/rm /tmp/"${FILE%.*}.cdr"
 fi
